@@ -1,0 +1,11 @@
+# Build artifacts
+/target/
+/build/
+/iso/
+*.iso
+*.bin
+*.o
+*.elf
+
+# macOS
+.DS_Store

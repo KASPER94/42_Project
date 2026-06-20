@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "skills": {
+    "github-actions-docs": {
+      "source": "xixu-me/skills",
+      "sourceType": "github",
+      "skillPath": "skills/github-actions-docs/SKILL.md",
+      "computedHash": "e9ac24e79715ef3060bd4ae376052f8d863b830604e69cb513b39764bf47ee53"
+    },
+    "makefile-generator": {
+      "source": "akin-ozer/cc-devops-skills",
+      "sourceType": "github",
+      "skillPath": "devops-skills-plugin/skills/makefile-generator/SKILL.md",
+      "computedHash": "a6a4ea1f9b3aa13204cb132db7457cd9a2da3631ae6c3932dfc562dd46e8dfaf"
+    },
+    "shell-scripting": {
+      "source": "absolutelyskilled/absolutelyskilled",
+      "sourceType": "github",
+      "skillPath": "skills/shell-scripting/SKILL.md",
+      "computedHash": "ebd4c1a5d9f24dcf89180dd216d1cedb8fb1f5a6bbd808c14a2a7c01a779fc5d"
+    },
+    "shellcheck-configuration": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/shell-scripting/skills/shellcheck-configuration/SKILL.md",
+      "computedHash": "9da2f34ada78a603bb2f611602af6f351d3dfe84e9bb73d6f800acab76ecd5aa"
+    },
+    "system-admin": {
+      "source": "chaterm/terminal-skills",
+      "sourceType": "github",
+      "skillPath": "linux/system-admin/SKILL.md",
+      "computedHash": "ac5897fca68e0dcc960449c34d6bf30514c7594a1da4b3a5c465f8f85c241d16"
+    }
+  }
+}

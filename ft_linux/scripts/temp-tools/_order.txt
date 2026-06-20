@@ -1,0 +1,22 @@
+# scripts/temp-tools/_order.txt
+# Canonical build order for the LFS Ch.6 cross-compiled temporary tools.
+# One script filename per line, in the order the orchestrator (A8) must run
+# them. Lines beginning with '#' and blank lines are ignored by the reader.
+# All run as the `lfs` user on the build HOST (before chroot).
+20-m4.sh
+21-ncurses.sh
+22-bash.sh
+23-coreutils.sh
+24-diffutils.sh
+25-file.sh
+26-findutils.sh
+27-gawk.sh
+28-grep.sh
+29-gzip.sh
+30-make.sh
+31-patch.sh
+32-sed.sh
+33-tar.sh
+34-xz.sh
+35-binutils-pass2.sh
+36-gcc-pass2.sh

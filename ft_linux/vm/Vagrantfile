@@ -1,0 +1,71 @@
+# vm/Vagrantfile — alternative to create-build-vm.sh (Vagrant + VirtualBox)
+# =============================================================================
+# Purpose : Bring up the LFS build-host VM declaratively with Vagrant, attaching
+#           a SECOND virtual disk that becomes the ft_linux TARGET (the file you
+#           shasum), and provisioning the host with vm/provision-build-host.sh.
+# Context : RUN ON THE macOS/Linux HOST:
+#               cd vm && vagrant up
+#           Requires Vagrant + the VirtualBox provider.
+# Disks   : Disk A = the box's own root disk (build host OS, /dev/sda).
+#           Disk B = lfs-target.vdi attached below (the ft_linux TARGET,
+#                    typically /dev/sdb -> $LFS_DISK).
+# NOTE    : Vagrant uses an installed-OS box (no ISO step), so this is the
+#           fastest path. The deliverable disk is vm/lfs-target.vdi.
+# =============================================================================
+
+Vagrant.configure("2") do |config|
+  # A modern Ubuntu LTS box with a working build toolchain base. bento images
+  # track current releases; ubuntu/jammy64 is a documented fallback.
+  config.vm.box = "bento/ubuntu-24.04"
+  # Fallback if the bento box is unavailable:
+  # config.vm.box = "ubuntu/jammy64"
+
+  config.vm.hostname = "lfs-build-host"
+
+  # NAT networking is Vagrant's default (so both build host and the eventual
+  # ft_linux reach the internet). No extra network config needed.
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.name   = "ft_linux-build"
+    vb.memory = 4096      # >= 4096 MB
+    vb.cpus   = 2         # >= 2 vCPU
+
+    # Graphics controller for the bonus GUI later (VMSVGA).
+    vb.customize ["modifyvm", :id, "--graphicscontroller", "vmsvga"]
+    vb.customize ["modifyvm", :id, "--vram", "64"]
+
+    # ----------------------------------------------------------------------
+    # SECOND disk = the ft_linux TARGET (the deliverable). Created once and
+    # attached on the SATA controller at port 1 (-> /dev/sdb inside the VM).
+    # ----------------------------------------------------------------------
+    target_disk = File.join(File.dirname(__FILE__), "lfs-target.vdi")
+    target_size = 20480   # ~20 GB, dynamic
+
+    unless File.exist?(target_disk)
+      vb.customize ["createhd", "--filename", target_disk,
+                    "--size", target_size, "--variant", "Standard", "--format", "VDI"]
+    end
+
+    # bento/ubuntu boxes expose a SATA controller named "SATA Controller".
+    # Attach the target disk at port 1 (port 0 is the box's own root disk).
+    vb.customize ["storageattach", :id,
+                  "--storagectl", "SATA Controller",
+                  "--port", "1", "--device", "0",
+                  "--type", "hdd", "--medium", target_disk]
+  end
+
+  # Sync the whole repo into the guest so the build scripts are available.
+  config.vm.synced_folder "..", "/home/vagrant/ft_linux"
+
+  # Provision the build host: install deps, repoint /bin/sh -> bash, run
+  # version-check.sh (aborts on failure). Runs as root.
+  config.vm.provision "shell", privileged: true, inline: <<-SHELL
+    set -euo pipefail
+    bash /home/vagrant/ft_linux/vm/provision-build-host.sh
+    echo "=============================================================="
+    echo "Build host provisioned. The ft_linux TARGET disk is /dev/sdb."
+    echo "Next (inside the VM):  cd /home/vagrant/ft_linux && sudo ./run-all.sh --yes"
+    echo "Deliverable on the host:  vm/lfs-target.vdi"
+    echo "=============================================================="
+  SHELL
+end

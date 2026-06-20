@@ -1,0 +1,19 @@
+[package]
+name = "kfs1"
+version = "0.1.0"
+edition = "2021"
+description = "KFS_1 - a freestanding i386 kernel (42 Kernel From Scratch)"
+
+# The kernel is built as a static library; boot.s (nasm) provides the entry
+# point and we link everything with our own linker.ld via `ld`.
+[lib]
+crate-type = ["staticlib"]
+path = "src/lib.rs"
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+opt-level = 2
+lto = true

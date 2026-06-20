@@ -1,0 +1,114 @@
+# sources/md5sums — expected MD5 checksums for ft_linux source tarballs
+# =============================================================================
+# FORMAT (GNU coreutils md5sum -c):
+#     <32-hex-char-md5><two spaces><filename>
+# sources/verify-sources.sh runs `cd "$SOURCES_DIR" && md5sum -c <this file>`
+# (after stripping comments + TODO lines) and FAILS LOUDLY on any mismatch.
+#
+# WHY MOST ENTRIES ARE "TODO":
+#   These files were authored on macOS WITHOUT downloading the (multi-GB) set
+#   of tarballs, so the real MD5s could not be computed here. Fabricating
+#   hashes would be worse than useless (it would make verify-sources.sh pass on
+#   wrong files), so each unknown package carries a documented TODO line.
+#
+# HOW TO POPULATE (do this once, inside the build-host VM):
+#   1) Run  sources/download-sources.sh  to fetch everything into $SOURCES_DIR.
+#   2) The AUTHORITATIVE md5s are published by the LFS book ("md5sums" page for
+#      your book revision). Copy them in, OR -- having fetched from the official
+#      mirrors -- generate them locally and cross-check against the book:
+#          cd "$SOURCES_DIR" && md5sum * > /tmp/md5sums.local
+#      then replace each TODO below with the matching "<md5>  <file>" line.
+#   3) Re-run sources/verify-sources.sh -- it warns about any remaining TODO and
+#      fails on any mismatch.
+#
+# DO NOT trust a self-generated md5 alone for security -- always reconcile with
+# the LFS book / upstream signatures. The TODO lines are intentionally NOT a
+# valid md5, so verify-sources.sh skips them (and counts them as unverified).
+#
+# Lines starting with "#" and lines beginning "TODO " are ignored by
+# verify-sources.sh. One entry per source tarball + each LFS patch.
+# =============================================================================
+
+# --- source tarballs (filenames derived from env/versions.sh) ---------------
+TODO  acl-2.3.2.tar.xz
+TODO  attr-2.5.2.tar.gz
+TODO  autoconf-2.72.tar.xz
+TODO  automake-1.17.tar.xz
+TODO  bash-5.2.37.tar.gz
+TODO  bc-7.0.3.tar.xz
+TODO  binutils-2.44.tar.xz
+TODO  bison-3.8.2.tar.xz
+TODO  bzip2-1.0.8.tar.gz
+TODO  check-0.15.2.tar.gz
+TODO  coreutils-9.6.tar.xz
+TODO  dbus-1.16.0.tar.xz
+TODO  dejagnu-1.6.3.tar.gz
+TODO  diffutils-3.11.tar.xz
+TODO  e2fsprogs-1.47.2.tar.gz
+TODO  elfutils-0.192.tar.bz2
+TODO  expat-2.6.4.tar.xz
+TODO  expect5.45.4.tar.gz
+TODO  file-5.46.tar.gz
+TODO  findutils-4.10.0.tar.xz
+TODO  flex-2.6.4.tar.gz
+TODO  gawk-5.3.1.tar.xz
+TODO  gcc-14.2.0.tar.xz
+TODO  gdbm-1.24.tar.gz
+TODO  gettext-0.24.tar.xz
+TODO  glibc-2.41.tar.xz
+TODO  gmp-6.3.0.tar.xz
+TODO  gperf-3.1.tar.gz
+TODO  grep-3.11.tar.xz
+TODO  groff-1.23.0.tar.gz
+TODO  grub-2.12.tar.xz
+TODO  gzip-1.13.tar.xz
+TODO  iana-etc-20250123.tar.gz
+TODO  inetutils-2.6.tar.xz
+TODO  intltool-0.51.0.tar.gz
+TODO  iproute2-6.13.0.tar.xz
+TODO  kbd-2.7.1.tar.xz
+TODO  linux-6.13.4.tar.xz
+TODO  kmod-33.tar.xz
+TODO  less-668.tar.gz
+TODO  libcap-2.73.tar.xz
+TODO  libffi-3.4.7.tar.gz
+TODO  libpipeline-1.5.8.tar.gz
+TODO  libtool-2.5.4.tar.xz
+TODO  m4-1.4.19.tar.xz
+TODO  make-4.4.1.tar.gz
+TODO  man-db-2.13.0.tar.xz
+TODO  man-pages-6.9.1.tar.xz
+TODO  meson-1.7.0.tar.gz
+TODO  mpc-1.3.1.tar.gz
+TODO  mpfr-4.2.1.tar.xz
+TODO  ncurses-6.5.tar.gz
+TODO  ninja-1.12.1.tar.gz
+TODO  openssl-3.4.1.tar.gz
+TODO  patch-2.7.6.tar.xz
+TODO  perl-5.40.1.tar.xz
+TODO  pkg-config-0.29.2.tar.gz
+TODO  procps-ng-4.0.5.tar.xz
+TODO  psmisc-23.7.tar.xz
+TODO  Python-3.13.2.tar.xz
+TODO  readline-8.2.13.tar.gz
+TODO  sed-4.9.tar.xz
+TODO  shadow-4.17.3.tar.xz
+TODO  systemd-man-pages-257.3.tar.xz
+TODO  systemd-257.3.tar.gz
+TODO  tar-1.35.tar.xz
+TODO  tcl8.6.16-src.tar.gz
+TODO  texinfo-7.2.tar.xz
+TODO  tzdata2025a.tar.gz
+TODO  util-linux-2.40.4.tar.xz
+TODO  vim-9.1.1080.tar.gz
+TODO  XML-Parser-2.47.tar.gz
+TODO  xz-5.6.4.tar.xz
+TODO  zlib-1.3.1.tar.gz
+TODO  zstd-1.5.6.tar.gz
+
+# --- LFS patches (filenames must match sources/download-sources.sh PATCH_URLS;
+#     verify the exact patch names + md5s against your LFS book revision) -----
+TODO  bzip2-1.0.8-install_docs-1.patch
+TODO  coreutils-9.6-i18n-1.patch
+TODO  glibc-2.41-fhs-1.patch
+TODO  kbd-2.7.1-backspace-1.patch

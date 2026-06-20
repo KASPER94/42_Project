@@ -1,0 +1,5 @@
+[toolchain]
+channel = "nightly"
+components = ["rust-src", "llvm-tools-preview"]
+# The build container freezes the exact nightly; this file just ensures the
+# right channel + components are selected inside it.

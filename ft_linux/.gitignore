@@ -1,0 +1,24 @@
+# ft_linux .gitignore
+# =============================================================================
+# ONLY scripts, configs, docs, and the final shasum.txt are committed.
+# NEVER commit the VM image or the downloaded sources — the spec says do not
+# push your entire VM, and the tarballs are large and reproducible from URLs.
+# =============================================================================
+
+# --- VM images / disks (the disk.vdi is the submission artifact, not git's job)
+*.vdi
+*.vmdk
+*.vbox
+*.vbox-prev
+*.iso
+
+# --- downloaded source tarballs (reproducible via sources/download-sources.sh)
+sources/*.tar.*
+sources/*.tgz
+
+# --- per-step build logs
+*.log
+/logs/
+
+# --- OS cruft
+.DS_Store

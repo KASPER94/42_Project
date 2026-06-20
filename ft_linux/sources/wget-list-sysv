@@ -1,0 +1,33 @@
+# sources/wget-list-sysv — REFERENCE ONLY (the SysVinit path we did NOT take)
+# =============================================================================
+# ft_linux is built as the *systemd* variant of LFS (a choice the spec
+# explicitly permits: mandatory.md offers "SysV OR SystemD", and packages.md
+# says the example packages — incl. udev — may be swapped for equivalents).
+#
+# This file exists purely for AUDITABILITY of that deviation: it records the
+# packages that the SysVinit path would have used and that the systemd path
+# therefore OMITS. The effective, authoritative list is sources/wget-list
+# (derived from env/versions.sh). The full rationale + role-mapping table lives
+# in docs/03-systemd-deviation.md and docs/06-package-manifest.md.
+#
+# This is intentionally NOT a complete divergent URL list — the ~64 shared
+# packages are identical to wget-list. Only the init/udev/logging trio differs.
+#
+# SysVinit-path packages REPLACED in the systemd build:
+#
+#   spec #14  Eudev              -> systemd-udevd        (kernel-module loader)
+#   spec #63  Udev-lfs Tarball   -> (provided by systemd, no separate tarball)
+#   spec #58  Sysvinit           -> systemd (PID 1)      (central management)
+#   spec #57  Sysklogd           -> systemd-journald     (system logging)
+#
+# Representative SysVinit-path URLs (for the record; NOT downloaded by this
+# build — verify exact versions against the SysVinit LFS book if ever used):
+#
+#   https://github.com/eudev-project/eudev/releases/download/v3.2.14/eudev-3.2.14.tar.gz
+#   https://anduin.linuxfromscratch.org/LFS/udev-lfs-20230818.tar.xz
+#   https://github.com/slicer69/sysvinit/.../sysvinit-3.xx.tar.xz
+#   https://www.infodrom.org/projects/sysklogd/download/sysklogd-2.x.x.tar.gz
+#   (+ the LFS bootscripts tarball, used only on the SysVinit path)
+#
+# Everything else (the ~64 other packages) is the SAME as sources/wget-list.
+# =============================================================================

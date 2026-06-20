@@ -1,0 +1,24 @@
+# /etc/systemd/network/20-wired.network — ft_linux network config (LFS Ch.9).
+#
+# Matches the VirtualBox NAT adapter and brings it up via DHCP. VirtualBox NAT
+# presents an Intel 82540EM (driver: e1000) by default, named e.g. `enp0s3` by
+# systemd's predictable interface naming; `virtio-net` adapters appear as
+# `enp0sN` too. We match the common "en*" prefix so the file works regardless of
+# the exact slot, satisfying the spec's "Connect to the Internet" goal.
+#
+# DHCP yes makes systemd-networkd request an address, gateway, and DNS from the
+# VirtualBox NAT DHCP server (10.0.2.x). systemd-resolved then publishes those
+# DNS servers via /run/systemd/resolve/stub-resolv.conf.
+
+[Match]
+Name=en*
+
+[Network]
+DHCP=yes
+# Fall back DNS in case the DHCP lease provides none (Google + Cloudflare).
+DNS=8.8.8.8
+DNS=1.1.1.1
+
+[DHCPv4]
+UseDNS=yes
+UseDomains=yes

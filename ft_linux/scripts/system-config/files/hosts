@@ -1,0 +1,14 @@
+# /etc/hosts for ft_linux (LFS Ch.9 — Configuring the system hostname).
+# The hostname MUST equal the student login `skapers` (spec rule R7).
+#
+# 127.0.0.1 is loopback; 127.0.1.1 maps the FQDN/hostname so tools that resolve
+# the machine name work even with no DNS for the local host (Debian convention,
+# also recommended by the LFS book for systems without a permanent IP).
+
+# Begin /etc/hosts
+127.0.0.1  localhost
+127.0.1.1  skapers.localdomain skapers
+::1        localhost ip6-localhost ip6-loopback
+ff02::1    ip6-allnodes
+ff02::2    ip6-allrouters
+# End /etc/hosts

@@ -1,0 +1,42 @@
+#!/bin/sh
+# ~/.xinitrc — ft_linux bonus X session
+# =============================================================================
+# Installed by bonus/40-wm/40-install-xinitrc.sh to the demo user's home, with
+# the @WM@, @TERMINAL@ and @RESOLUTION@ placeholders substituted at install
+# time from the bonus toggles (BONUS_WM / BONUS_TERMINAL).
+#
+# Run it with `startx` from a text console as the (non-root) demo user. startx
+# -> xinit -> this script. The LAST line MUST `exec` the window manager so the
+# session lives as long as the WM does.
+# =============================================================================
+
+# Merge X resource defaults / keymaps if present (harmless if absent).
+userresources="$HOME/.Xresources"
+usermodmap="$HOME/.Xmodmap"
+sysresources=/etc/X11/xinit/.Xresources
+sysmodmap=/etc/X11/xinit/.Xmodmap
+[ -f "$sysresources" ] && xrdb -merge "$sysresources"
+[ -f "$sysmodmap" ]    && xmodmap "$sysmodmap"
+[ -f "$userresources" ] && xrdb -merge "$userresources"
+[ -f "$usermodmap" ]    && xmodmap "$usermodmap"
+
+# Force a sane fixed resolution for a VirtualBox guest WITHOUT Guest Additions.
+# The xorg.conf.d/10-monitor.conf drop-in also requests this; the xrandr call
+# is a belt-and-suspenders nudge once the server is up. Failure is non-fatal
+# (e.g. if the mode is already active or the output name differs).
+if command -v xrandr >/dev/null 2>&1; then
+	# Pick the first connected output and set the target mode.
+	out="$(xrandr --query 2>/dev/null | awk '/ connected/{print $1; exit}')"
+	[ -n "$out" ] && xrandr --output "$out" --mode "@RESOLUTION@" 2>/dev/null || true
+fi
+
+# A neutral background colour so a blank screen is obviously "X is up".
+command -v xsetroot >/dev/null 2>&1 && xsetroot -solid '#222233'
+
+# Start a status-bar feeder + a terminal in the BACKGROUND, then exec the WM.
+# (Everything before the final exec must be backgrounded or it blocks the WM.)
+command -v slstatus >/dev/null 2>&1 && slstatus &
+command -v @TERMINAL@ >/dev/null 2>&1 && @TERMINAL@ &
+
+# Hand control to the window manager. This MUST be the last line and use exec.
+exec @WM@

@@ -1,0 +1,24 @@
+# /etc/fstab for ft_linux (LFS Ch.9) — GENERATED FROM THIS TEMPLATE.
+#
+# 53-fstab.sh fills the @@..@@ placeholders with the real partition UUIDs read
+# at runtime via `blkid`, so the table is robust across device renaming
+# (/dev/sdb3 -> /dev/sda3 etc. once ft_linux boots standalone).
+#
+# Partition layout (>= 3 partitions — spec rule R6):
+#   p1  ->  /boot   ext4
+#   p2  ->  swap
+#   p3  ->  /       ext4   (root)
+#
+# <file system>            <mount pt>  <type>  <options>             <dump> <pass>
+UUID=@@ROOT_UUID@@         /           ext4    defaults,noatime        1     1
+UUID=@@BOOT_UUID@@         /boot       ext4    defaults,noatime        1     2
+UUID=@@SWAP_UUID@@         none        swap    sw                      0     0
+
+# Kernel virtual filesystems are mounted automatically by systemd at boot; they
+# are listed here for documentation completeness (systemd would mount them even
+# if absent). proc/sysfs/devpts/tmpfs are API filesystems.
+proc                       /proc       proc    nosuid,noexec,nodev     0     0
+sysfs                      /sys        sysfs   nosuid,noexec,nodev     0     0
+devpts                     /dev/pts    devpts  gid=5,mode=620          0     0
+tmpfs                      /run        tmpfs   defaults                0     0
+devtmpfs                   /dev        devtmpfs mode=0755,nosuid       0     0

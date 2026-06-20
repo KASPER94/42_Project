@@ -1,0 +1,32 @@
+# grub.cfg.template — rendered to /boot/grub/grub.cfg by 71-grub-cfg.sh.
+#
+# Placeholders filled at runtime:
+#   @@KERNEL_NAME@@   the exact /boot kernel basename, vmlinuz-<ver>-skapers
+#   @@ROOT_UUID@@     the root partition UUID (read via blkid)
+#   @@TIMEOUT@@       menu timeout in seconds
+#
+# This is a GRUB 2 config (LFS Ch.10, BIOS/i386-pc). The `linux` line MUST point
+# at the spec-named kernel binary and pass root= by UUID so boot survives device
+# renaming once ft_linux runs standalone (target disk becomes /dev/sda).
+
+set default=0
+set timeout=@@TIMEOUT@@
+
+insmod part_gpt
+insmod part_msdos
+insmod ext2
+
+menuentry "ft_linux (GNU/Linux, kernel skapers)" {
+        # Identify the partition holding /boot by its filesystem UUID, then load
+        # the kernel from it. With a dedicated /boot partition the kernel lives
+        # at the top of that partition (no /boot prefix in the path).
+        search --no-floppy --fs-uuid --set=root @@BOOT_UUID@@
+        echo "Loading @@KERNEL_NAME@@ ..."
+        linux /@@KERNEL_NAME@@ root=UUID=@@ROOT_UUID@@ ro quiet
+}
+
+menuentry "ft_linux (recovery / single-user)" {
+        search --no-floppy --fs-uuid --set=root @@BOOT_UUID@@
+        echo "Loading @@KERNEL_NAME@@ (single-user) ..."
+        linux /@@KERNEL_NAME@@ root=UUID=@@ROOT_UUID@@ ro systemd.unit=rescue.target
+}
