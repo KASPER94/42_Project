@@ -131,6 +131,72 @@ def test_fresh_type_toggle_selects_nn() -> None:
     assert config.model == "nn"
 
 
+def test_fresh_type_cycler_reaches_dqn() -> None:
+    """Cycling the fresh-type widget twice selects the dqn agent."""
+    lobby = Lobby.build(models_dir="models")
+    lobby._refresh_enabled()
+    x, y, w, h = lobby.fresh_type.rect
+    lobby.handle(_click(x + w - 5, y + h // 2))  # qtable -> nn
+    lobby.handle(_click(x + w - 5, y + h // 2))  # nn -> dqn
+    config = lobby.config()
+    assert config.model == "dqn"
+
+
+def test_visualizer_window_close_flags_quit() -> None:
+    """A window-close event stops the loop and marks window_closed."""
+    viz = Visualizer(size=10)
+    try:
+        assert viz.stopped_by_user is False
+        pygame.event.post(pygame.event.Event(pygame.QUIT))
+        running = viz.process_events()
+        assert running is False
+        assert viz.window_closed is True
+        assert viz.stopped_by_user is True
+    finally:
+        viz.close()
+
+
+def test_visualizer_escape_returns_to_menu() -> None:
+    """Escape stops the loop without flagging a window close (menu return)."""
+    viz = Visualizer(size=10)
+    try:
+        pygame.event.post(_key(pygame.K_ESCAPE))
+        running = viz.process_events()
+        assert running is False
+        assert viz.escaped is True
+        assert viz.window_closed is False
+        assert viz.stopped_by_user is True
+    finally:
+        viz.close()
+
+
+def test_visualizer_control_key_keeps_running() -> None:
+    """A control key (pause) keeps the loop running and is not a user stop."""
+    viz = Visualizer(size=10)
+    try:
+        pygame.event.post(_key(pygame.K_SPACE))
+        running = viz.process_events()
+        assert running is True
+        assert viz.paused is True
+        assert viz.stopped_by_user is False
+    finally:
+        viz.close()
+
+
+def test_visualizer_panel_hint_depends_on_lobby() -> None:
+    """The panel hint reads 'Esc menu' from the lobby and 'Esc quit' from CLI."""
+    cli_viz = Visualizer(size=10, in_lobby=False)
+    lobby_viz = Visualizer(size=10, in_lobby=True)
+    try:
+        cli_text = " ".join(text for text, _ in cli_viz._panel_lines({}))
+        lobby_text = " ".join(text for text, _ in lobby_viz._panel_lines({}))
+        assert "Esc quit" in cli_text
+        assert "Esc menu" in lobby_text
+    finally:
+        cli_viz.close()
+        lobby_viz.close()
+
+
 def test_visualizer_renders_with_stats_headlessly() -> None:
     """A Visualizer constructs headlessly and renders a stats overlay frame."""
     viz = Visualizer(size=10)

@@ -67,7 +67,8 @@ class LobbyConfig:
         speed: Display speed in frames/steps per second.
         board_size: Board side length in cells.
         load: Path to a model file to load, or ``None`` for a fresh agent.
-        model: Fresh-agent type, ``"qtable"`` or ``"nn"`` (ignored when loading).
+        model: Fresh-agent type, ``"qtable"``, ``"nn"`` or ``"dqn"`` (ignored
+            when loading).
         dontlearn: Freeze the agent (exploitation only) when ``True``.
         visual: Always ``"on"`` when launched from the GUI lobby.
     """
@@ -254,7 +255,7 @@ class Lobby:
     speed: Stepper = field(init=False)
     board: Stepper = field(init=False)
     model: Cycler = field(init=False)
-    fresh_type: Toggle = field(init=False)
+    fresh_type: Cycler = field(init=False)
     dontlearn: Toggle = field(init=False)
     start: Button = field(init=False)
     quit: Button = field(init=False)
@@ -285,7 +286,7 @@ class Lobby:
         self.speed = Stepper("Speed (fps)", (cx, row(1), cw, h), DEFAULT_FPS, 1, 60, 5)
         self.board = Stepper("Board size", (cx, row(2), cw, h), BOARD_SIZE, 5, 20, 1)
         self.model = Cycler("Model", (cx, row(3), cw, h), model_options, index=0)
-        self.fresh_type = Toggle("Fresh type", (cx, row(4), cw, h), labels=("qtable", "nn"))
+        self.fresh_type = Cycler("Fresh type", (cx, row(4), cw, h), ["qtable", "nn", "dqn"])
         self.dontlearn = Toggle("Don't learn", (cx, row(5), cw, h))
         bw = (cw - _BUTTON_GAP) // 2
         self.start = Button("Start", (cx, _BUTTON_ROW_Y, bw, h))
@@ -347,7 +348,7 @@ class Lobby:
         Returns:
             The configuration. When a model is selected, ``load`` is its path
             and ``model``/``dontlearn`` follow the loaded-agent widgets;
-            otherwise ``load`` is ``None`` and the fresh-type toggle picks the
+            otherwise ``load`` is ``None`` and the fresh-type cycler picks the
             agent class.
         """
         fresh = self.model.value == FRESH_LABEL
@@ -357,7 +358,7 @@ class Lobby:
             speed=int(self.speed.value),
             board_size=int(self.board.value),
             load=load,
-            model="nn" if (fresh and self.fresh_type.state) else "qtable",
+            model=self.fresh_type.value if fresh else "qtable",
             dontlearn=bool(self.dontlearn.state) and not fresh,
             visual="on",
         )

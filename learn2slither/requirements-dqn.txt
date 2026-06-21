@@ -1,0 +1,4 @@
+# Optional extra: only needed to run the bonus DQN agent (`-model dqn`).
+# The mandatory qtable/nn agents run with requirements.txt alone (no torch).
+#   pip install -r requirements.txt -r requirements-dqn.txt
+torch>=2.0

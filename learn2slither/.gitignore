@@ -1,0 +1,30 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# --- Virtual environments (non portables : à recréer sur chaque machine) ---
+venv/
+.venv/
+env/
+
+# --- Outils / cache ---
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- OS / éditeurs ---
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# --- Modèles : on COMMIT les modèles entraînés (requis par le sujet),
+#     mais on ignore les fichiers de test jetables ---
+models/test.txt

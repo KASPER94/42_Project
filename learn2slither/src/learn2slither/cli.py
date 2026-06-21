@@ -71,9 +71,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "-model",
-        choices=["qtable", "nn"],
+        choices=["qtable", "nn", "dqn"],
         default="qtable",
-        help="agent type for a fresh run (ignored when -load is given)",
+        help="agent type for a fresh run (ignored when -load is given); "
+        "'dqn' requires torch (see requirements-dqn.txt)",
     )
     parser.add_argument(
         "-menu",
@@ -120,9 +121,17 @@ def _model_type(path: str) -> str:
 
 
 def _agent_for_type(model_type: str) -> AgentP:
-    """Instantiate the agent class matching ``model_type``."""
+    """Instantiate the agent class matching ``model_type``.
+
+    The DQN agent (and thus torch) is imported lazily so the mandatory qtable
+    and nn agents never depend on torch being installed.
+    """
     if model_type == "nn":
         return NNAgent(seed=DEFAULT_SEED)
+    if model_type == "dqn":
+        from learn2slither.dqn_agent import DQNAgent
+
+        return DQNAgent(seed=DEFAULT_SEED)
     return QTableAgent(seed=DEFAULT_SEED)
 
 
@@ -169,38 +178,66 @@ def _should_open_lobby(argv: Optional[list]) -> bool:
 
 
 def _run_from_lobby() -> int:
-    """Open the lobby and run the chosen configuration (or exit if cancelled).
+    """Loop between the lobby and the game until the user quits the app.
+
+    Each pass opens the lobby; a chosen configuration is played, then control
+    returns here so the lobby reopens (the player went back via Escape or the
+    run finished). Only closing the game window -- or cancelling the lobby
+    itself -- exits the application.
 
     Returns:
-        Process exit code (0); 0 without playing when the user quits the lobby.
+        Process exit code (0).
     """
     from learn2slither.menu import run_lobby
 
-    config = run_lobby()
-    if config is None:
-        return 0
-    args = build_parser().parse_args([])
-    args.sessions = config.sessions
-    args.speed = config.speed
-    args.board_size = config.board_size
-    args.load = config.load
-    args.model = config.model
-    args.dontlearn = config.dontlearn
-    args.visual = config.visual
-    return _run_from_args(args)
+    while True:
+        config = run_lobby()
+        if config is None:
+            return 0
+        args = build_parser().parse_args([])
+        args.sessions = config.sessions
+        args.speed = config.speed
+        args.board_size = config.board_size
+        args.load = config.load
+        args.model = config.model
+        args.dontlearn = config.dontlearn
+        args.visual = config.visual
+        if not _play(args, from_lobby=True):
+            return 0
 
 
 def _run_from_args(args: argparse.Namespace) -> int:
-    """Assemble the world/agent/visualizer and drive the session loop.
+    """Play one configured run from the CLI flags and exit.
 
-    Shared by the CLI-flags path and the lobby path so both behave identically
-    once the run parameters are decided.
+    This is the mandatory path; its behaviour is unchanged (a quit or window
+    close ends the program rather than returning to any menu).
 
     Args:
-        args: Fully populated CLI namespace (also produced from a lobby config).
+        args: Fully populated CLI namespace.
 
     Returns:
         Process exit code (0 on success).
+    """
+    _play(args, from_lobby=False)
+    return 0
+
+
+def _play(args: argparse.Namespace, from_lobby: bool) -> bool:
+    """Assemble the world/agent/visualizer and drive the session loop.
+
+    Shared by the CLI-flags path and the lobby path. A user-initiated quit and
+    ``KeyboardInterrupt`` are handled cleanly and still honor ``-save`` on the
+    way out. When launched from the lobby and the run ends on its own, a
+    game-over screen is held until the player continues.
+
+    Args:
+        args: Fully populated CLI namespace (also produced from a lobby config).
+        from_lobby: Whether this run was launched from the graphical lobby.
+
+    Returns:
+        ``True`` when the lobby should reopen (the player asked to go back, or
+        the run finished); ``False`` to quit the application (window closed,
+        ``KeyboardInterrupt``, or a plain CLI run).
     """
     env = Environment(size=args.board_size, seed=DEFAULT_SEED)
     interpreter = Interpreter()
@@ -208,10 +245,11 @@ def _run_from_args(args: argparse.Namespace) -> int:
     if args.dontlearn:
         agent.learning = False
 
-    visualizer = _build_visualizer(args)
+    visualizer = _build_visualizer(args, from_lobby=from_lobby)
     # Keep terminal vision on for visual runs and short headless runs; stay
     # quiet for multi-session headless training so the loop is not flooded.
     verbose = (args.visual == "on") or (args.sessions <= 1)
+    interrupted = False
     try:
         run_sessions(
             env,
@@ -222,24 +260,32 @@ def _run_from_args(args: argparse.Namespace) -> int:
             step_by_step=args.step_by_step,
             verbose=verbose,
         )
+        if from_lobby and visualizer is not None and not visualizer.stopped_by_user:
+            visualizer.show_game_over()
+            visualizer.wait_for_menu()
     except KeyboardInterrupt:
         print()
+        interrupted = True
     finally:
         if args.save:
             agent.save(args.save)
             print("Save learning state in {0}".format(args.save))
         if visualizer is not None:
             visualizer.close()
-    return 0
+    if interrupted or visualizer is None:
+        return False
+    return from_lobby and not visualizer.window_closed
 
 
-def _build_visualizer(args: argparse.Namespace):
+def _build_visualizer(args: argparse.Namespace, from_lobby: bool = False):
     """Construct a visualizer only when the display is enabled.
 
     Importing pygame is deferred to here so headless runs never touch it.
 
     Args:
         args: Parsed CLI arguments.
+        from_lobby: Whether this run was launched from the graphical lobby
+            (passed through so the panel hint reads "Esc menu").
 
     Returns:
         A ``Visualizer`` instance, or ``None`` when ``-visual off``.
@@ -248,4 +294,4 @@ def _build_visualizer(args: argparse.Namespace):
         return None
     from learn2slither.visualizer import Visualizer
 
-    return Visualizer(size=args.board_size, fps=args.speed)
+    return Visualizer(size=args.board_size, fps=args.speed, in_lobby=from_lobby)

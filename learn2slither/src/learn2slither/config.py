@@ -47,6 +47,17 @@ EPSILON_DECAY: float = 0.995  # multiplicative decay applied once per session
 NN_HIDDEN_SIZE: int = 32
 NN_LEARNING_RATE: float = 0.001
 
+# --- Deep Q-Network agent (PyTorch, optional dependency) -------------------
+# Same vision state as the other agents, but Q is approximated by a small MLP
+# stabilized with experience replay and a periodically-synced target network.
+# torch is imported lazily so the mandatory agents never depend on it.
+DQN_HIDDEN_SIZE: int = 64
+DQN_LEARNING_RATE: float = 0.001
+DQN_BUFFER_SIZE: int = 10_000   # replay buffer capacity (transitions)
+DQN_BATCH_SIZE: int = 64        # mini-batch sampled from the buffer per step
+DQN_TARGET_UPDATE: int = 500    # learn steps between target-network syncs
+DQN_WARMUP: int = 200           # transitions to collect before training starts
+
 # --- Episode safety ---------------------------------------------------------
 # Hard cap on steps within a single game so a circling snake cannot loop
 # forever during headless training.

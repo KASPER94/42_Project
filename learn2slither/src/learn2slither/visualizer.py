@@ -72,6 +72,7 @@ class Visualizer:
         cell_pixels: int = CELL_PIXELS,
         fps: int = DEFAULT_FPS,
         title: str = "Learn2Slither",
+        in_lobby: bool = False,
     ) -> None:
         """Create the window, clock and font.
 
@@ -80,12 +81,20 @@ class Visualizer:
             cell_pixels: Pixel size of one board cell.
             fps: Display speed for frame-rate-based pacing.
             title: Window caption.
+            in_lobby: Whether this run was launched from the graphical lobby;
+                only changes the on-panel hint (Escape returns to the menu
+                instead of quitting the application).
         """
         self.size = int(size)
         self.cell_pixels = int(cell_pixels)
         self.fps = max(1, int(fps))
+        self.in_lobby = bool(in_lobby)
         self.paused = False
         self.step_requested = False
+        # Why the loop stopped: the window's close button (quit the app) versus
+        # the Escape key (return to the lobby when launched from it).
+        self.window_closed = False
+        self.escaped = False
         pygame.init()
         self._board_side = self.size * self.cell_pixels
         width = self._board_side + PANEL_PIXELS
@@ -169,7 +178,8 @@ class Visualizer:
             ("Speed     {0} fps".format(stats.get("fps", self.fps)), text),
             (mode, accent),
             ("Space pause  Up/Dn speed", COLOR_PANEL_TEXT),
-            ("Right step   Esc quit", COLOR_PANEL_TEXT),
+            ("Right step   Esc {0}".format("menu" if self.in_lobby else "quit"),
+             COLOR_PANEL_TEXT),
         ]
 
     @staticmethod
@@ -220,16 +230,24 @@ class Visualizer:
 
         Returns:
             ``False`` if the user asked to quit (window close or the Escape
-            key), otherwise ``True``.
+            key), otherwise ``True``. The reason is recorded on
+            :attr:`window_closed` / :attr:`escaped` for the caller.
         """
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                self.window_closed = True
                 return False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    self.escaped = True
                     return False
                 self._handle_control_key(event.key)
         return True
+
+    @property
+    def stopped_by_user(self) -> bool:
+        """Whether the user actively stopped the run (window close or Escape)."""
+        return self.window_closed or self.escaped
 
     def _handle_control_key(self, key: int) -> None:
         """Apply a single live-control key press to the mutable state.
@@ -258,12 +276,48 @@ class Visualizer:
         while True:
             event = pygame.event.wait()
             if event.type == pygame.QUIT:
+                self.window_closed = True
                 return False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    self.escaped = True
                     return False
                 if event.key in advance_keys:
                     return True
+
+    def show_game_over(self) -> None:
+        """Dim the board and draw a centered game-over prompt, then flip.
+
+        Used by the lobby flow after a run finishes on its own so the final
+        frame stays visible until the player chooses to continue.
+        """
+        overlay = pygame.Surface((self._board_side, self._board_side), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 180))
+        self._screen.blit(overlay, (0, 0))
+        hint = "any key: menu    close: quit"
+        self._blit_centered("GAME OVER", COLOR_PANEL_ACCENT, -16)
+        self._blit_centered(hint, COLOR_PANEL_TEXT, 16)
+        pygame.display.flip()
+
+    def _blit_centered(self, text: str, color: Color, dy: int) -> None:
+        """Blit ``text`` centered on the board, offset vertically by ``dy``."""
+        surface = self._font.render(text, True, color)
+        center = (self._board_side // 2, self._board_side // 2 + dy)
+        self._screen.blit(surface, surface.get_rect(center=center))
+
+    def wait_for_menu(self) -> None:
+        """Block on the game-over screen until the user continues or quits.
+
+        Any key or mouse click returns (caller reopens the menu); closing the
+        window sets :attr:`window_closed` so the caller can quit the app.
+        """
+        while True:
+            event = pygame.event.wait()
+            if event.type == pygame.QUIT:
+                self.window_closed = True
+                return
+            if event.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
+                return
 
     def close(self) -> None:
         """Tear down pygame and close the window."""
