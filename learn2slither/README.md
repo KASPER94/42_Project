@@ -81,6 +81,7 @@ import path itself, no install step required.
 | `-speed N` | Display speed in frames/steps per second (visual mode). | `10` |
 | `-board-size N` | Board side length in cells (bonus; the model is board-size independent). | `10` |
 | `-model qtable\|nn` | Agent type for a fresh run. Ignored when `-load` is given. | `qtable` |
+| `-seed N` | RNG seed for snake/apple placement and the agent. A negative value (e.g. `-seed -1`) picks a random seed each launch and prints it so the run stays reproducible. | `42` |
 
 A run prints `Game over, max length = X, max duration = Y` (the maxima across all
 sessions) at the end. Loading prints `Load trained model from PATH`; saving prints

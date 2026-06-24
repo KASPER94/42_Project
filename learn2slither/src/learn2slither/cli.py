@@ -83,6 +83,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="open the graphical configuration lobby (bonus); also opened "
         "automatically when no CLI arguments are given",
     )
+    parser.add_argument(
+        "-seed",
+        type=int,
+        default=DEFAULT_SEED,
+        help="RNG seed for snake/apple placement and the agent (reproducible "
+        "runs). Use a negative value (e.g. -seed -1) for a random seed each "
+        "launch; the chosen seed is then printed so the run can be reproduced.",
+    )
     return parser
 
 
@@ -99,11 +107,11 @@ def make_agent(args: argparse.Namespace) -> AgentP:
         An agent satisfying :class:`learn2slither.contracts.AgentP`.
     """
     if args.load:
-        agent = _agent_for_type(_model_type(args.load))
+        agent = _agent_for_type(_model_type(args.load), args.seed)
         agent.load(args.load)
         print("Load trained model from {0}".format(args.load))
         return agent
-    return _agent_for_type(args.model)
+    return _agent_for_type(args.model, args.seed)
 
 
 def _model_type(path: str) -> str:
@@ -120,19 +128,36 @@ def _model_type(path: str) -> str:
     return str(payload.get("type", "qtable"))
 
 
-def _agent_for_type(model_type: str) -> AgentP:
+def _agent_for_type(model_type: str, seed: int = DEFAULT_SEED) -> AgentP:
     """Instantiate the agent class matching ``model_type``.
 
     The DQN agent (and thus torch) is imported lazily so the mandatory qtable
     and nn agents never depend on torch being installed.
+
+    Args:
+        model_type: One of ``"qtable"``, ``"nn"`` or ``"dqn"``.
+        seed: RNG seed shared with the environment for a reproducible run.
     """
     if model_type == "nn":
-        return NNAgent(seed=DEFAULT_SEED)
+        return NNAgent(seed=seed)
     if model_type == "dqn":
         from learn2slither.dqn_agent import DQNAgent
 
-        return DQNAgent(seed=DEFAULT_SEED)
-    return QTableAgent(seed=DEFAULT_SEED)
+        return DQNAgent(seed=seed)
+    return QTableAgent(seed=seed)
+
+
+def _random_seed() -> int:
+    """Return a fresh random seed in ``[0, 2**31)``.
+
+    A concrete integer (never ``None``) so the environment and every agent --
+    including the DQN, whose ``torch.manual_seed`` rejects ``None`` -- share one
+    valid seed, and so a random run can still be reproduced from the printed
+    value via ``-seed <value>``.
+    """
+    import secrets
+
+    return secrets.randbelow(1 << 31)
 
 
 def main(argv: Optional[list] = None) -> int:
@@ -239,7 +264,10 @@ def _play(args: argparse.Namespace, from_lobby: bool) -> bool:
         the run finished); ``False`` to quit the application (window closed,
         ``KeyboardInterrupt``, or a plain CLI run).
     """
-    env = Environment(size=args.board_size, seed=DEFAULT_SEED)
+    if getattr(args, "seed", DEFAULT_SEED) < 0:
+        args.seed = _random_seed()
+        print("Random seed = {0}".format(args.seed))
+    env = Environment(size=args.board_size, seed=args.seed)
     interpreter = Interpreter()
     agent = make_agent(args)
     if args.dontlearn:
