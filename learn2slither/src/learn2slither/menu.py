@@ -376,11 +376,15 @@ def _find_models(models_dir: str) -> List[str]:
     return sorted(glob.glob(os.path.join(models_dir, "*.txt")))
 
 
-def run_lobby(models_dir: str = "models") -> Optional[LobbyConfig]:
+def run_lobby(models_dir: str = "models", keep_alive: bool = False) -> Optional[LobbyConfig]:
     """Open the lobby window and return the chosen configuration.
 
     Args:
         models_dir: Directory scanned for selectable ``*.txt`` models.
+        keep_alive: When ``True``, SDL is left initialized on return instead of
+            being torn down. The caller (``cli._run_from_lobby``) owns the single
+            teardown so the lobby and game can share one SDL session; re-init
+            across the lobby<->game transition segfaults on Linux with torch.
 
     Returns:
         The chosen :class:`LobbyConfig` when the user starts, or ``None`` when
@@ -396,7 +400,8 @@ def run_lobby(models_dir: str = "models") -> Optional[LobbyConfig]:
     try:
         return _lobby_loop(lobby, screen, clock, font, title_font)
     finally:
-        pygame.quit()
+        if not keep_alive:
+            pygame.quit()
 
 
 def _lobby_loop(lobby: Lobby, screen, clock, font, title_font) -> Optional[LobbyConfig]:

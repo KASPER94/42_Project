@@ -190,20 +190,29 @@ def _run_from_lobby() -> int:
     """
     from learn2slither.menu import run_lobby
 
-    while True:
-        config = run_lobby()
-        if config is None:
-            return 0
-        args = build_parser().parse_args([])
-        args.sessions = config.sessions
-        args.speed = config.speed
-        args.board_size = config.board_size
-        args.load = config.load
-        args.model = config.model
-        args.dontlearn = config.dontlearn
-        args.visual = config.visual
-        if not _play(args, from_lobby=True):
-            return 0
+    # SDL is initialized once for the whole lobby<->game lifecycle and torn down
+    # a single time here. Re-initializing SDL (lobby quit + game init, or vice
+    # versa) segfaults on Linux once torch (the DQN agent) is resident, so the
+    # lobby and the visualizer keep SDL alive and defer the teardown to here.
+    try:
+        while True:
+            config = run_lobby(keep_alive=True)
+            if config is None:
+                return 0
+            args = build_parser().parse_args([])
+            args.sessions = config.sessions
+            args.speed = config.speed
+            args.board_size = config.board_size
+            args.load = config.load
+            args.model = config.model
+            args.dontlearn = config.dontlearn
+            args.visual = config.visual
+            if not _play(args, from_lobby=True):
+                return 0
+    finally:
+        import pygame
+
+        pygame.quit()
 
 
 def _run_from_args(args: argparse.Namespace) -> int:
