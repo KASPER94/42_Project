@@ -320,14 +320,5 @@ class Visualizer:
                 return
 
     def close(self) -> None:
-        """Tear down pygame and close the window.
-
-        When launched from the lobby, SDL is kept alive across every
-        lobby<->game transition: tearing it down here and re-initializing it on
-        the next pass segfaults on Linux once torch (the DQN agent) is resident.
-        The single teardown then happens in ``cli._run_from_lobby`` when the
-        whole lobby loop exits. The standalone CLI path keeps quitting here.
-        """
-        if self.in_lobby:
-            return
+        """Tear down pygame and close the window."""
         pygame.quit()

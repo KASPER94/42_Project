@@ -87,35 +87,34 @@ sessions) at the end. Loading prints `Load trained model from PATH`; saving prin
 `Save learning state in PATH`. Runs are deterministic (seed `42`), so the same
 command produces the same output every time.
 
-## Troubleshooting — segfault with the GUI + DQN on Linux/Fedora
+## Troubleshooting — segfault when running the DQN agent (Linux)
 
 The optional DQN agent (`-model dqn`) depends on `torch` (see
-`requirements-dqn.txt`). On Linux — Fedora in particular — running it **with the
-pygame window open** can segfault, while headless (`-visual off`) and the
-qtable/nn agents are fine. The cause is a native C++ runtime clash: SDL opens an
-OpenGL window through Mesa (built against the system `libstdc++`), but the pip
-`torch` wheel ships its own `libstdc++`/`libgomp`, and the two collide in one
-process.
+`requirements-dqn.txt`). On some Linux setups (a GPU-less lab machine with a
+**CUDA build of torch**, in particular) it segfaults when the agent builds its
+Adam optimizer. The crash is *inside torch*, not in this project: constructing
+the optimizer lazily imports `torch._dynamo` → **Triton**, and importing Triton
+segfaults on a box with no usable CUDA driver. The mandatory qtable/nn agents
+never import torch, so they are unaffected.
 
-Launch with one of these workarounds (the first usually suffices):
+A `PYTHONFAULTHANDLER=1 ./snake` traceback confirms it — the bottom of the stack
+is `torch.optim.adam` → `torch/_dynamo` → `triton/...`.
+
+Triton is only used by `torch.compile` for GPU codegen, which this project never
+calls, so removing it is safe. Two fixes (the CPU wheel is the durable one):
 
 ```bash
-# Force the system libstdc++ so torch and Mesa share one C++ runtime (best fix)
-LD_PRELOAD=/usr/lib64/libstdc++.so.6 ./snake
+# Quick: drop the unused, crashing optional dependency
+pip uninstall -y triton pytorch-triton
 
-# If that path differs on your machine, find it first:
-ldconfig -p | grep libstdc++
-
-# Fallbacks:
-LIBGL_ALWAYS_SOFTWARE=1 ./snake        # software Mesa rendering (skip the GPU driver)
-SDL_VIDEODRIVER=x11 ./snake            # force X11 instead of Wayland (Fedora default)
-
-# Most robust combination:
-LD_PRELOAD=/usr/lib64/libstdc++.so.6 LIBGL_ALWAYS_SOFTWARE=1 ./snake
+# Durable (GPU-less machine): reinstall the CPU-only torch wheel — no CUDA, no
+# Triton, and much smaller
+pip uninstall -y torch triton pytorch-triton
+pip install torch --index-url https://download.pytorch.org/whl/cpu
 ```
 
-The mandatory qtable/nn agents never import `torch`, so they are unaffected; only
-the bonus DQN agent with the display enabled needs this.
+After either fix, the DQN agent runs both headless (`-visual off`) and with the
+pygame window / lobby.
 
 ## Example invocations
 
