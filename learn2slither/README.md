@@ -87,6 +87,36 @@ sessions) at the end. Loading prints `Load trained model from PATH`; saving prin
 `Save learning state in PATH`. Runs are deterministic (seed `42`), so the same
 command produces the same output every time.
 
+## Troubleshooting — segfault with the GUI + DQN on Linux/Fedora
+
+The optional DQN agent (`-model dqn`) depends on `torch` (see
+`requirements-dqn.txt`). On Linux — Fedora in particular — running it **with the
+pygame window open** can segfault, while headless (`-visual off`) and the
+qtable/nn agents are fine. The cause is a native C++ runtime clash: SDL opens an
+OpenGL window through Mesa (built against the system `libstdc++`), but the pip
+`torch` wheel ships its own `libstdc++`/`libgomp`, and the two collide in one
+process.
+
+Launch with one of these workarounds (the first usually suffices):
+
+```bash
+# Force the system libstdc++ so torch and Mesa share one C++ runtime (best fix)
+LD_PRELOAD=/usr/lib64/libstdc++.so.6 ./snake
+
+# If that path differs on your machine, find it first:
+ldconfig -p | grep libstdc++
+
+# Fallbacks:
+LIBGL_ALWAYS_SOFTWARE=1 ./snake        # software Mesa rendering (skip the GPU driver)
+SDL_VIDEODRIVER=x11 ./snake            # force X11 instead of Wayland (Fedora default)
+
+# Most robust combination:
+LD_PRELOAD=/usr/lib64/libstdc++.so.6 LIBGL_ALWAYS_SOFTWARE=1 ./snake
+```
+
+The mandatory qtable/nn agents never import `torch`, so they are unaffected; only
+the bonus DQN agent with the display enabled needs this.
+
 ## Example invocations
 
 These are the three command blocks from `.specs/evaluation.md`.
