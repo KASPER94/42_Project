@@ -102,20 +102,27 @@ A `PYTHONFAULTHANDLER=1 ./snake` traceback confirms it — the bottom of the sta
 is `torch.optim.adam` → `torch/_dynamo` → `triton/...`.
 
 Triton is only used by `torch.compile` for GPU codegen, which this project never
-calls, so removing it is safe. Two fixes (the CPU wheel is the durable one):
+calls, so the CPU-only torch wheel (no CUDA, no Triton, much smaller) is the
+right build here.
+
+**This is already configured for uv.** `pyproject.toml` routes `torch` to
+PyTorch's CPU index on Linux (`[tool.uv.sources]` + `[[tool.uv.index]]`), so a
+normal sync installs the CPU build with no Triton:
 
 ```bash
-# Quick: drop the unused, crashing optional dependency
-pip uninstall -y triton pytorch-triton
-
-# Durable (GPU-less machine): reinstall the CPU-only torch wheel — no CUDA, no
-# Triton, and much smaller
-pip uninstall -y torch triton pytorch-triton
-pip install torch --index-url https://download.pytorch.org/whl/cpu
+uv sync --extra dqn
 ```
 
-After either fix, the DQN agent runs both headless (`-visual off`) and with the
-pygame window / lobby.
+If you install with plain `pip` instead of uv, pull the CPU wheel explicitly:
+
+```bash
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+# or, if a CUDA torch is already installed, just drop the crashing extra:
+pip uninstall -y triton pytorch-triton
+```
+
+After this, the DQN agent runs both headless (`-visual off`) and with the pygame
+window / lobby.
 
 ## Example invocations
 

@@ -12,6 +12,19 @@ dependencies = [
 # Bonus DQN agent only (heavy, optional). Install with: uv sync --extra dqn
 dqn = ["torch>=2.0"]
 
+# On Linux, PyPI's default torch wheel is a CUDA build that pulls in Triton and
+# segfaults on the school machines (no usable GPU/driver -- see the README
+# troubleshooting section). Route torch to PyTorch's CPU-only index there; other
+# platforms keep the default PyPI wheel (already CPU). `explicit = true` means
+# the index is used only for packages that opt in below, never for numpy/pygame.
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
 [project.scripts]
 # Lets `uv run snake ...` work; the ./snake script keeps working too.
 snake = "learn2slither.cli:main"
@@ -21,6 +34,14 @@ snake = "learn2slither.cli:main"
 dev = [
     "pytest>=7.0",
     "flake8>=5.0",
+]
+
+[tool.pytest.ini_options]
+# pygame imports the deprecated pkg_resources at import time (third-party, not
+# our code). Silence only that one warning so the suite stays clean without
+# hiding any real warnings.
+filterwarnings = [
+    "ignore:pkg_resources is deprecated as an API:UserWarning",
 ]
 
 [build-system]
